@@ -1,6 +1,5 @@
 from django.contrib import admin
-from blog.models import Product, Company, Sale, Customer
-
+from .models import Product, Company, Sale, Customer
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -18,7 +17,6 @@ class ProductAdmin(admin.ModelAdmin):
             return False
         return True
 
-
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
     list_display = ('title', 'phone', 'address', 'products_type', 'get_total_qty')
@@ -35,11 +33,14 @@ class CompanyAdmin(admin.ModelAdmin):
 
     get_total_qty.short_description = "Mahsulot soni"
 
-
 @admin.register(Sale)
 class SaleAdmin(admin.ModelAdmin):
     list_display = ('customer', 'company', 'product', 'quantity_sold', 'total_amount', 'sale_date')
-    # fields = ('customer', 'product', 'quantity_sold')
+
+    def total_amount(self, obj):
+        return obj.total_amount
+
+    total_amount.short_description = "Umumiy narxi"
 
     def has_add_permission(self, request):
         return True
@@ -49,7 +50,6 @@ class SaleAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
-
 
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):

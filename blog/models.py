@@ -3,7 +3,6 @@ from django.db import models
 from django.utils import timezone
 
 
-
 class Company(models.Model):
     title = models.CharField("Company title", max_length=250)
     phone = models.CharField("Company phone", max_length=50)
@@ -13,7 +12,7 @@ class Company(models.Model):
         verbose_name_plural = "Kompaniyalar"
         verbose_name = "Kompaniya"
 
-    def str(self):
+    def __str__(self):
         return self.title
 
     def products_type(self):
@@ -29,33 +28,34 @@ class Customer(models.Model):
     class Meta:
         verbose_name_plural = "Xaridorlar"
 
-    def str(self):
+    def __str__(self):
         return self.name
+
+
 class Product(models.Model):
     title = models.CharField("Mahsulot nomi", max_length=250)
-    price = models.IntegerField("Narxi",)
-    qty = models.IntegerField("Mahsulot soni",default=0)
-    company = models.ForeignKey('blog.Company', verbose_name='Kompaniya', on_delete=models.CASCADE)
+    price = models.IntegerField("Narxi")
+    qty = models.IntegerField("Mahsulot soni", default=0)
+    company = models.ForeignKey(Company, verbose_name='Kompaniya', on_delete=models.CASCADE)
 
     def clean(self):
         if self.qty < 0:
-            raise ValidationError("Manfiy son kiritsh mumkin emas")
+            raise ValidationError("Manfiy son kiritish mumkin emas")
         if self.price < 0:
-            raise ValidationError("Manfiy son kiritsh mumkin emas")
+            raise ValidationError("Manfiy son kiritish mumkin emas")
 
-    def str(self):
-        return f"{self.title} {self.company}"
+    def __str__(self):
+        return f"{self.title} ({self.company})"
 
     class Meta:
         verbose_name_plural = "Mahsulotlar"
-        verbose_name = "mahsulot"
-
+        verbose_name = "Mahsulot"
 
 
 class Sale(models.Model):
-    customer = models.ForeignKey('blog.Customer', verbose_name='Xaridor', on_delete=models.CASCADE)
-    product = models.ForeignKey('blog.Product', verbose_name='Mahsulot', on_delete=models.CASCADE)
-    company = models.ForeignKey('blog.Company', verbose_name='Kompaniya' ,on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, verbose_name='Xaridor', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, verbose_name='Mahsulot', on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, verbose_name='Kompaniya', on_delete=models.CASCADE)
     quantity_sold = models.IntegerField(verbose_name='Sotilgan soni')
     sale_date = models.DateTimeField(auto_now_add=True, verbose_name='Sotilgan vaqti')
 
@@ -75,14 +75,15 @@ class Sale(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         if self.product.company != self.company:
-            raise ValidationError('Selected product does not belong to the selected company.')
+            raise ValidationError('Tanlangan mahsulot tanlangan kompaniyaga tegishli emas.')
 
         if self.product.qty >= self.quantity_sold:
             self.product.qty -= self.quantity_sold
             self.product.save()
             super().save(*args, **kwargs)
         else:
-            raise ValueError('Mahsulot soni yetarli emas!')
+            raise ValidationError('Mahsulot soni yetarli emas!')
 
-    def str(self):
+    def __str__(self):
         return f'{self.customer.name} - {self.product.title} - {self.quantity_sold}'
+
